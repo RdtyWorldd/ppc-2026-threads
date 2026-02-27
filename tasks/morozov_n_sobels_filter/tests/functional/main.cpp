@@ -3,9 +3,8 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <fstream>
-#include <ios>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -29,60 +28,24 @@ class MorozovNRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
     std::string filename = params + ".txt";
 
     GetImageFromFile(filename);
-    // std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_morozov_n_sobels_filter, filename);
-    // std::ifstream infile(abs_path, std::ios::in);
-    // if (!infile.is_open()) {
-    //   throw std::runtime_error("Failed to open file: " + filename);
-    // }
-
-    // std::string line;
-    // std::size_t count = 0;
-    // while (std::getline(infile, line)) {
-    //   if (line.empty()) {
-    //     continue;
-    //   }
-
-    //   std::istringstream iss(line);
-    //   int elem = 0;
-
-    //   if (count == 0) {
-    //     iss >> input_data_.height;
-    //   } else if (count == 1) {
-    //     iss >> input_data_.width;
-    //   } else if (count < input_data_.height + 2) {
-    //     while (iss >> elem) {
-    //       input_data_.pixels.push_back(elem);
-    //     }
-    //   } else {
-    //     while (iss >> elem) {
-    //       output_chekup_data_.pixels.push_back(elem);
-    //     }
-    //   }
-
-    //   ++count;
-    // }
-
-    // //input_data_.threshold = 100;
-
-    // infile.close();
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if((output_data.height != correct_image_.height) || (output_data.width != correct_image_.width) ||
-      (output_data.pixels.size() != correct_image_.pixels.size())) {
+    if ((output_data.height != correct_image_.height) || (output_data.width != correct_image_.width) ||
+        (output_data.pixels.size() != correct_image_.pixels.size())) {
       return false;
     }
 
     return output_data.pixels == correct_image_.pixels;
   }
 
-  void GetImageFromFile(const std::string& path) {
+  void GetImageFromFile(const std::string &path) {
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_morozov_n_sobels_filter, path);
     std::ifstream file(abs_path);
-    if(!file.is_open()) {
+    if (!file.is_open()) {
       throw std::runtime_error("failed to load image");
     }
-    
+
     size_t height = 0;
     size_t width = 0;
 
@@ -92,19 +55,19 @@ class MorozovNRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
     input_data_.height = height;
     input_data_.width = width;
     input_data_.pixels.resize(height * width);
-    for(size_t i = 0; i < input_data_.pixels.size(); i++) {
+    for (auto &pixel : input_data_.pixels) {
       int val = 0;
       file >> val;
-      input_data_.pixels[i] = static_cast<uint8_t>(val);
+      pixel = static_cast<uint8_t>(val);
     }
 
-    std::string emptyLine;
-    std::getline(file, emptyLine);
+    std::string empty_line;
+    std::getline(file, empty_line);
 
     correct_image_.height = height;
     correct_image_.width = width;
     correct_image_.pixels.resize(height * width);
-    for(size_t i = 0; i < correct_image_.pixels.size(); i++) {
+    for (size_t i = 0; i < correct_image_.pixels.size(); i++) {
       int val = 0;
       file >> val;
       correct_image_.pixels[i] = static_cast<uint8_t>(val);

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
+#include <array>    
 
 #include "morozov_n_sobels_filter/common/include/common.hpp"
 #include "task/include/task.hpp"
@@ -23,10 +25,10 @@ class MorozovNSobelsFilterSEQ : public BaseTask {
   void Filter(const Image& img);
   uint8_t CalculateNewPixelColor(const Image& img, size_t x, size_t y);
 
-  const std::array<std::array<int, 3>, 3> _kKernelX = {std::array<int, 3>{-1, 0, 1}, std::array<int, 3>{-2, 0, 2},
+  static constexpr std::array<std::array<int, 3>, 3> kKernelX_ = {std::array<int, 3>{-1, 0, 1}, std::array<int, 3>{-2, 0, 2},
                                                    std::array<int, 3>{-1, 0, 1}};
 
-  const std::array<std::array<int, 3>, 3> _kKernelY = {std::array<int, 3>{-1, -2, -1}, std::array<int, 3>{0, 0, 0},
+  static constexpr std::array<std::array<int, 3>, 3> kKernelY_ = {std::array<int, 3>{-1, -2, -1}, std::array<int, 3>{0, 0, 0},
                                                    std::array<int, 3>{1, 2, 1}};
   Image result_image_;
 };

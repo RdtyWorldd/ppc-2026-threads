@@ -5,7 +5,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <utility>
 
 #include "morozov_n_sobels_filter/common/include/common.hpp"
 
@@ -21,12 +20,9 @@ MorozovNSobelsFilterSEQ::MorozovNSobelsFilterSEQ(const InType &in) {
 }
 
 bool MorozovNSobelsFilterSEQ::ValidationImpl() {
-  const Image& input = GetInput();
-  if((input.height != result_image_.height) || (input.width != result_image_.width) || 
-    (input.pixels.size() != result_image_.pixels.size())) {
-      return false;
-  }
-  return true;
+  const Image &input = GetInput();
+  return (input.height == result_image_.height) && (input.width == result_image_.width) &&
+         (input.pixels.size() == result_image_.pixels.size());
 }
 
 bool MorozovNSobelsFilterSEQ::PreProcessingImpl() {
@@ -34,7 +30,7 @@ bool MorozovNSobelsFilterSEQ::PreProcessingImpl() {
 }
 
 bool MorozovNSobelsFilterSEQ::RunImpl() {
-  const Image& input = GetInput();
+  const Image &input = GetInput();
   Filter(input);
   GetOutput() = result_image_;
   return true;
@@ -45,15 +41,15 @@ bool MorozovNSobelsFilterSEQ::PostProcessingImpl() {
 }
 
 void MorozovNSobelsFilterSEQ::Filter(const Image &img) {
-  for(size_t y = 1; y < img.height - 1; y++) {
-    for(size_t x = 1; x < img.width - 1; x++) {
-      size_t pixel_id = (y * img.width) + x;
-      result_image_.pixels[pixel_id] = CalculateNewPixelColor(img, x, y);
+  for (size_t id_y = 1; id_y < img.height - 1; id_y++) {
+    for (size_t id_x = 1; id_x < img.width - 1; id_x++) {
+      size_t pixel_id = (id_y * img.width) + id_x;
+      result_image_.pixels[pixel_id] = CalculateNewPixelColor(img, id_x, id_y);
     }
   }
 }
 
-uint8_t MorozovNSobelsFilterSEQ::CalculateNewPixelColor(const Image& img, size_t x, size_t y) {
+uint8_t MorozovNSobelsFilterSEQ::CalculateNewPixelColor(const Image &img, size_t x, size_t y) {
   constexpr int kRadX = 1;
   constexpr int kRadY = 1;
   constexpr size_t kZero = 0;
@@ -67,8 +63,8 @@ uint8_t MorozovNSobelsFilterSEQ::CalculateNewPixelColor(const Image& img, size_t
       size_t id_y = std::clamp(y + row_offset, kZero, img.height - 1);
       size_t pixel_id = (id_y * img.width) + id_x;
 
-      grad_x += img.pixels[pixel_id] * _kKernelX[row_offset + kRadY][col_offset + kRadX];
-      grad_y += img.pixels[pixel_id] * _kKernelY[row_offset + kRadY][col_offset + kRadX];
+      grad_x += img.pixels[pixel_id] * kKernelX_.at(row_offset + kRadY).at(col_offset + kRadX);
+      grad_y += img.pixels[pixel_id] * kKernelY_.at(row_offset + kRadY).at(col_offset + kRadX);
     }
   }
 
