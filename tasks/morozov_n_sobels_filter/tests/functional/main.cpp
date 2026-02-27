@@ -67,10 +67,10 @@ class MorozovNRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
     correct_image_.height = height;
     correct_image_.width = width;
     correct_image_.pixels.resize(height * width);
-    for (size_t i = 0; i < correct_image_.pixels.size(); i++) {
+    for (auto &pixel : correct_image_.pixels) {
       int val = 0;
       file >> val;
-      correct_image_.pixels[i] = static_cast<uint8_t>(val);
+      pixel = static_cast<uint8_t>(val);
     }
   }
 

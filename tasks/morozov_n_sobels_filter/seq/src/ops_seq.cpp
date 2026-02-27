@@ -63,8 +63,8 @@ uint8_t MorozovNSobelsFilterSEQ::CalculateNewPixelColor(const Image &img, size_t
       size_t id_y = std::clamp(y + row_offset, kZero, img.height - 1);
       size_t pixel_id = (id_y * img.width) + id_x;
 
-      grad_x += img.pixels[pixel_id] * kKernelX_.at(row_offset + kRadY).at(col_offset + kRadX);
-      grad_y += img.pixels[pixel_id] * kKernelY_.at(row_offset + kRadY).at(col_offset + kRadX);
+      grad_x += img.pixels[pixel_id] * kKernelX.at(row_offset + kRadY).at(col_offset + kRadX);
+      grad_y += img.pixels[pixel_id] * kKernelY.at(row_offset + kRadY).at(col_offset + kRadX);
     }
   }
 
