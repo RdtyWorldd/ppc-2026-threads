@@ -7,6 +7,7 @@
 #include <cstdint>
 
 #include "morozov_n_sobels_filter/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace morozov_n_sobels_filter {
 
