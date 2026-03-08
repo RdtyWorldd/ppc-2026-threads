@@ -10,8 +10,8 @@
 #include <tuple>
 
 #include "morozov_n_sobels_filter/common/include/common.hpp"
-#include "morozov_n_sobels_filter/seq/include/ops_seq.hpp"
 #include "morozov_n_sobels_filter/omp/include/ops_omp.hpp"
+#include "morozov_n_sobels_filter/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
