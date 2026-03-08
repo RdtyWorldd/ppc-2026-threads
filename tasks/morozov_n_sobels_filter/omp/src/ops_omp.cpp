@@ -42,8 +42,7 @@ bool MorozovNSobelsFilterOMP::PostProcessingImpl() {
 }
 
 void MorozovNSobelsFilterOMP::Filter(const Image &img) {
-#pragma omp parallel for schedule(static) default(none) shared(img) \
-    num_threads(ppc::util::GetNumThreads())
+#pragma omp parallel for schedule(static) default(none) shared(img) num_threads(ppc::util::GetNumThreads())
   for (size_t id_y = 1; id_y < img.height - 1; id_y++) {
     for (size_t id_x = 1; id_x < img.width - 1; id_x++) {
       size_t pixel_id = (id_y * img.width) + id_x;
