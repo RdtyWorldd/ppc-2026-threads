@@ -36,29 +36,28 @@ bool MorozovNSobelsFilterSTL::RunImpl() {
 
   const int kNumThreads = ppc::util::GetNumThreads();
   std::vector<std::thread> threads(kNumThreads);
-  
+
   size_t start_row = 1;
   size_t end_row = input.height - 1;
   size_t total_rows = end_row - start_row;
-  
+
   size_t rows_per_thread = total_rows / kNumThreads;
   size_t remaining_rows = total_rows % kNumThreads;
-  
+
   size_t current_start = start_row;
-  
+
   for (int i = 0; i < kNumThreads; i++) {
     size_t num_rows = rows_per_thread + (i < static_cast<int>(remaining_rows) ? 1 : 0);
-    
+
     if (num_rows > 0) {
-      threads[i] = std::thread([this, &input, current_start, num_rows]() {
-        this->Filter(input, current_start, num_rows);
-      });
+      threads[i] =
+          std::thread([this, &input, current_start, num_rows]() { this->Filter(input, current_start, num_rows); });
     }
-    
+
     current_start += num_rows;
   }
 
-  for (auto& thread : threads) {
+  for (auto &thread : threads) {
     if (thread.joinable()) {
       thread.join();
     }
@@ -74,7 +73,7 @@ bool MorozovNSobelsFilterSTL::PostProcessingImpl() {
 
 void MorozovNSobelsFilterSTL::Filter(const Image &img, size_t start_row, size_t num_rows) {
   size_t end_row = start_row + num_rows;
-  
+
   for (size_t id_y = start_row; id_y < end_row; id_y++) {
     for (size_t id_x = 1; id_x < img.width - 1; id_x++) {
       size_t pixel_id = (id_y * img.width) + id_x;
