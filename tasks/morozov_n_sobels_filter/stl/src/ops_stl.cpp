@@ -6,9 +6,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "morozov_n_sobels_filter/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace morozov_n_sobels_filter {
 
@@ -34,20 +36,21 @@ bool MorozovNSobelsFilterSTL::PreProcessingImpl() {
 bool MorozovNSobelsFilterSTL::RunImpl() {
   const Image &input = GetInput();
 
-  const int kNumThreads = ppc::util::GetNumThreads();
-  std::vector<std::thread> threads(kNumThreads);
+  const int k_num_threads = ppc::util::GetNumThreads();
+  std::vector<std::thread> threads(k_num_threads);
 
   size_t start_row = 1;
   size_t end_row = input.height - 1;
   size_t total_rows = end_row - start_row;
 
-  size_t rows_per_thread = total_rows / kNumThreads;
-  size_t remaining_rows = total_rows % kNumThreads;
+  size_t rows_per_thread = total_rows / k_num_threads;
+  size_t remaining_rows = total_rows % k_num_threads;
 
   size_t current_start = start_row;
 
-  for (int i = 0; i < kNumThreads; i++) {
-    size_t num_rows = rows_per_thread + (i < static_cast<int>(remaining_rows) ? 1 : 0);
+  for (int i = 0; i < k_num_threads; i++) {
+    size_t num_rows = rows_per_thread + (std::cmp_less(i, remaining_rows) ? 1 : 0);
+    ;
 
     if (num_rows > 0) {
       threads[i] =

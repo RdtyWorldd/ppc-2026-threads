@@ -22,7 +22,7 @@ class MorozovNSobelsFilterSTL : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void Filter(const Image &img, size_t start, size_t size);
+  void Filter(const Image &img, size_t start_row, size_t num_rows);
   static uint8_t CalculateNewPixelColor(const Image &img, size_t x, size_t y);
 
   static constexpr std::array<std::array<int, 3>, 3> kKernelX = {
