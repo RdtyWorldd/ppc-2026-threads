@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <random>
 
+#include "morozov_n_sobels_filter/all/include/ops_all.hpp"
 #include "morozov_n_sobels_filter/common/include/common.hpp"
 #include "morozov_n_sobels_filter/omp/include/ops_omp.hpp"
 #include "morozov_n_sobels_filter/seq/include/ops_seq.hpp"
@@ -54,8 +55,8 @@ TEST_P(MorozovNRunPerfTests, RunPerfModes) {
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, MorozovNSobelsFilterSEQ, MorozovNSobelsFilterOMP, MorozovNSobelsFilterSTL>(
-        PPC_SETTINGS_morozov_n_sobels_filter);
+    ppc::util::MakeAllPerfTasks<InType, MorozovNSobelsFilterSEQ, MorozovNSobelsFilterOMP, MorozovNSobelsFilterSTL,
+                                MorozovNSobelsFilterALL>(PPC_SETTINGS_morozov_n_sobels_filter);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
