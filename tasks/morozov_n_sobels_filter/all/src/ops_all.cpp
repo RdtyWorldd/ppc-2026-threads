@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <iostream>
 #include <vector>
 
 #include "morozov_n_sobels_filter/common/include/common.hpp"
@@ -31,13 +32,35 @@ bool MorozovNSobelsFilterALL::ValidationImpl() {
          (input.pixels.size() == result_image_.pixels.size());
 }
 
-void MorozovNSobelsFilterALL::SplitRows(size_t global_rows, size_t proc_num, size_t &start, size_t &count) {
+void MorozovNSobelsFilterALL::SplitRows(size_t global_rows, size_t proc_num, size_t &start, size_t &count) const {
   size_t base = global_rows / size_;
   size_t rem = global_rows % size_;
 
   count = base + (proc_num < rem ? 1 : 0);
 
-  start = proc_num * base + std::min<size_t>(proc_num, rem);
+  start = (proc_num * base) + std::min<size_t>(proc_num, rem);
+}
+
+void MorozovNSobelsFilterALL::SendImageDataFromZeroProc(const Image &global, size_t halo) {
+  for (int proc = 0; proc < size_; proc++) {
+    size_t proc_start{};
+    size_t proc_rows{};
+
+    SplitRows(global.height, proc, proc_start, proc_rows);
+
+    size_t top = (proc_start == 0) ? 0 : halo;
+    size_t bottom = (proc_start + proc_rows == global.height) ? 0 : halo;
+    size_t offset = proc_start - top;
+    size_t total = proc_rows + top + bottom;
+
+    const auto *ptr = global.pixels.data() + (offset * global.width);
+
+    if (proc == 0) {
+      std::copy(ptr, ptr + (total * global.width), local_image_.pixels.begin());
+    } else {
+      MPI_Send(ptr, static_cast<int>(total * global.width), MPI_UNSIGNED_CHAR, proc, 0, MPI_COMM_WORLD);
+    }
+  }
 }
 
 void MorozovNSobelsFilterALL::CollectResult() {
@@ -45,7 +68,7 @@ void MorozovNSobelsFilterALL::CollectResult() {
 
   size_t top = (start_row_ == 0) ? 0 : halo;
 
-  auto *send_ptr = result_image_.pixels.data() + top * result_image_.width;
+  auto *send_ptr = result_image_.pixels.data() + (top * result_image_.width);
 
   size_t send_count = local_rows_ * result_image_.width;
 
@@ -64,14 +87,14 @@ void MorozovNSobelsFilterALL::CollectResult() {
 
       SplitRows(global.height, proc, start, rows);
 
-      MPI_Recv(global.pixels.data() + start * global.width, rows * global.width, MPI_UINT8_T, proc, 1, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
+      MPI_Recv(global.pixels.data() + (start * global.width), static_cast<int>(rows * global.width), MPI_UNSIGNED_CHAR,
+               proc, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
 
     GetOutput() = global;
 
   } else {
-    MPI_Send(send_ptr, send_count, MPI_UINT8_T, 0, 1, MPI_COMM_WORLD);
+    MPI_Send(send_ptr, static_cast<int>(send_count), MPI_UNSIGNED_CHAR, 0, 1, MPI_COMM_WORLD);
   }
 }
 
@@ -97,8 +120,6 @@ bool MorozovNSobelsFilterALL::PreProcessingImpl() {
 
   size_t bottom_halo = (start_row_ + local_rows_ == height) ? 0 : halo;
 
-  // size_t send_start = start_row_ - top_halo;
-
   size_t send_rows = local_rows_ + top_halo + bottom_halo;
 
   local_image_.width = width;
@@ -106,32 +127,10 @@ bool MorozovNSobelsFilterALL::PreProcessingImpl() {
   local_image_.pixels.resize(send_rows * width);
 
   if (rank_ == 0) {
-    for (int proc = 0; proc < size_; proc++) {
-      size_t proc_start{};
-      size_t proc_rows{};
-
-      SplitRows(height, proc, proc_start, proc_rows);
-
-      size_t top = (proc_start == 0) ? 0 : halo;
-
-      size_t bottom = (proc_start + proc_rows == height) ? 0 : halo;
-
-      size_t offset = proc_start - top;
-
-      size_t total = proc_rows + top + bottom;
-
-      auto *ptr = global.pixels.data() + offset * width;
-
-      if (proc == 0) {
-        std::copy(ptr, ptr + total * width, local_image_.pixels.begin());
-
-      } else {
-        MPI_Send(ptr, total * width, MPI_UINT8_T, proc, 0, MPI_COMM_WORLD);
-      }
-    }
-
+    SendImageDataFromZeroProc(global, static_cast<size_t>(halo));
   } else {
-    MPI_Recv(local_image_.pixels.data(), send_rows * width, MPI_UINT8_T, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(local_image_.pixels.data(), static_cast<int>(send_rows * width), MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD,
+             MPI_STATUS_IGNORE);
   }
 
   return true;
@@ -142,18 +141,19 @@ bool MorozovNSobelsFilterALL::RunImpl() {
   result_image_.height = local_image_.height;
   result_image_.pixels.resize(local_image_.pixels.size());
 
-  size_t begin = (start_row_ == 0) ? 1 : 1;
-
+  constexpr size_t KBegin = 1;
   size_t end = local_image_.height - 1;
 
-  Filter(local_image_, result_image_, begin, end);
+  Filter(local_image_, result_image_, KBegin, end);
   CollectResult();
 
   return true;
 }
 
 void MorozovNSobelsFilterALL::Filter(const Image &img, Image &local_result, size_t start_row, size_t end_row) {
-#pragma omp parallel for schedule(static) default(none) shared(img, local_result, start_row, end_row)
+  // std::cout << rank_ << "NUM_threads_on_rank: " << ppc::util::GetNumThreads() << std::endl;
+#pragma omp parallel for schedule(static) default(none) shared(img, local_result, start_row, end_row) \
+    num_threads(ppc::util::GetNumThreads())
   for (size_t id_y = start_row; id_y < end_row; id_y++) {
     for (size_t id_x = 1; id_x < img.width - 1; id_x++) {
       size_t pixel_id = (id_y * img.width) + id_x;
@@ -198,7 +198,7 @@ bool MorozovNSobelsFilterALL::PostProcessingImpl() {
     out.pixels.resize(out.width * out.height);
   }
 
-  MPI_Bcast(out.pixels.data(), out.pixels.size(), MPI_UINT8_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(out.pixels.data(), out.pixels.size(), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
   return true;
 }
