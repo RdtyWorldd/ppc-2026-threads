@@ -141,17 +141,16 @@ bool MorozovNSobelsFilterALL::RunImpl() {
   result_image_.height = local_image_.height;
   result_image_.pixels.resize(local_image_.pixels.size());
 
-  constexpr size_t KBegin = 1;
+  constexpr size_t kBegin = 1;
   size_t end = local_image_.height - 1;
 
-  Filter(local_image_, result_image_, KBegin, end);
+  Filter(local_image_, result_image_, kBegin, end);
   CollectResult();
 
   return true;
 }
 
 void MorozovNSobelsFilterALL::Filter(const Image &img, Image &local_result, size_t start_row, size_t end_row) {
-  // std::cout << rank_ << "NUM_threads_on_rank: " << ppc::util::GetNumThreads() << std::endl;
 #pragma omp parallel for schedule(static) default(none) shared(img, local_result, start_row, end_row) \
     num_threads(ppc::util::GetNumThreads())
   for (size_t id_y = start_row; id_y < end_row; id_y++) {
@@ -198,7 +197,7 @@ bool MorozovNSobelsFilterALL::PostProcessingImpl() {
     out.pixels.resize(out.width * out.height);
   }
 
-  MPI_Bcast(out.pixels.data(), out.pixels.size(), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Bcast(out.pixels.data(), static_cast<int>(out.pixels.size()), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
   return true;
 }

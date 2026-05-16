@@ -26,7 +26,8 @@ class MorozovNSobelsFilterALL : public BaseTask {
   void SplitRows(size_t global_rows, size_t proc_num, size_t &start, size_t &count) const;
   void SendImageDataFromZeroProc(const Image &global, size_t halo);
   void CollectResult();
-  void Filter(const Image &img, Image &local_result, size_t start_row, size_t end_row);
+
+  static void Filter(const Image &img, Image &local_result, size_t start_row, size_t end_row);
   static uint8_t CalculateNewPixelColor(const Image &img, size_t x, size_t y);
 
   static constexpr std::array<std::array<int, 3>, 3> kKernelX = {
