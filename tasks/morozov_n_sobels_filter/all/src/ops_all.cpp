@@ -7,7 +7,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <iostream>
 #include <vector>
 
 #include "morozov_n_sobels_filter/common/include/common.hpp"
